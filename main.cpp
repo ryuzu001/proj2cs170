@@ -68,13 +68,12 @@ double getDistance(line L1, line L2, vector<int>featureNumbers){
     /* if featureNumbers.size = 3, 3 features - 3D graph... etc */
     double temp = 0, s = 0;
     for(int i = 0; i < featureNumbers.size(); i++){
-        temp = pow(L1.data.at(featureNumbers.at(i) - 1) - L2.data.at(featureNumbers.at(i) - 1), 2);
+        temp = pow(L1.data.at(featureNumbers.at(i)) - L2.data.at(featureNumbers.at(i)), 2);
         s += temp;
         /* Σ((x_1 - x_2)^2) */
     }
     return sqrt(s);
 }
-
 double kFold(set s, vector<int> features){
     /* MachineLearning001.ppt slide 34 */
     double numCorrect = 0, closestFeature = 99999;
@@ -96,29 +95,61 @@ double kFold(set s, vector<int> features){
         if(l.classifier == closest.classifier){ numCorrect++; }
         closestFeature = 99999;
     }
-
-    // return numCorrect/numInstances(s) * 100;
-    return numCorrect;
+    return numCorrect/numInstances(s) * 100;    // percentage
+    // return numCorrect;
 }
-
+string printSubset(vector<int> v){
+    string r = "{";
+    for(int j = v.size() - 1; j >= 0; j--){
+        r += to_string(v.at(j));
+        if(j != 0) r += ",";
+    }
+    r += "}";
+    return r;
+}
+void forwardSelection(set s){
+    vector<int> featureList;
+    double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy;
+    cout << "Beginning search.\n";
+    while(prevAccuracy < bestAccuracy){
+        prevAccuracy = bestAccuracy;
+        for(int i = 0; i < s.lines.at(0).data.size(); i++){
+            for(int j = 0; j < featureList.size(); j++)
+            if(featureList.at(j) == i) goto skip;   // skip already used features
+            featureList.push_back(i);
+            accuracy = kFold(s, featureList);
+            cout << "\tUsing feature(s) " << printSubset(featureList) << " accuracy is " << accuracy << "%\n";   
+            if(accuracy > bestAccuracy){
+                bestAccuracy = accuracy;
+                tempFeature = i;
+            }         
+            featureList.pop_back();
+            skip: ;
+        }
+        if(prevAccuracy == bestAccuracy) break;
+        featureList.push_back(tempFeature);
+        cout << "Feature set " << printSubset(featureList) << " was best, accuracy is " << bestAccuracy << "%\n";
+    }
+    cout << "Finished search! The best feature subset is " << printSubset(featureList) << ", which has an accuracy of " << bestAccuracy << "%\n";
+}
+void backwardElimination(set s){}
+void ryanSpecial(set s){}
 int main(){
     string filename;
     int sel = 0;
     set mainData;
+    vector<int> t;
     cout << "Welcome to Ryan Yuzuki's Feature Selection Algorithm.\nType the name of the file you wish to test: ";
     cin >> filename;
     mainData = importData(filename);
+    for(int i = 0; i < numFeatures(mainData); i++){ t.push_back(i); }
     cout << "This dataset has " << numFeatures(mainData) << " features (not including the class attribute), with " << numInstances(mainData) << " instances.\n";
+    cout << "Running nearest neighbor with all " << numFeatures(mainData) << " features, using \"leaving-one-out\" evaluation, I get an accuracy of " << kFold(mainData, t) << "%\n";
     algorithmSelect:
     cout << "Type the number of the algorithm you want to run:\n1) Forward Selection\n2) Backward Elimination\n3) Ryan's Special Algorithm\n";
     cin >> sel;
-
-    vector<int> t;
-    t.push_back(1);
-    cout << kFold(mainData, t) << " / " << numInstances(mainData);
-
-    if(sel==1){printSet(mainData);}
-    else if(sel==2){}
-    else if(sel==3){}
+    if(sel==1){forwardSelection(mainData);}
+    else if(sel==2){backwardElimination(mainData);}
+    else if(sel==3){ryanSpecial(mainData);}
     else{goto algorithmSelect;}
 }
