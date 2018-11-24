@@ -101,7 +101,7 @@ double kFold(set s, vector<int> features){
 string printSubset(vector<int> v){
     string r = "{";
     for(int j = v.size() - 1; j >= 0; j--){
-        r += to_string(v.at(j));
+        r += to_string(v.at(j) + 1);
         if(j != 0) r += ",";
     }
     r += "}";
