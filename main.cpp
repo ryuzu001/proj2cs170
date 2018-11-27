@@ -17,12 +17,8 @@ struct line{
 struct set{ vector<line> lines; };
 clock_t start;
 
-set importData(string filename){
-    set mainSet;
-    line l;
-    ifstream file;
-    string temp;
-    double num;
+set importData(string filename){    /* import IEEE standard input to set object */
+    set mainSet; line l; ifstream file; string temp; double num;
     file.open(filename.c_str());
     if(file.is_open()){
         while(getline(file, temp)){
@@ -31,9 +27,7 @@ set importData(string filename){
             ss << temp;
             ss >> num;
             l.classifier = num;
-            while(ss >> num){
-                l.data.push_back(num);
-            }
+            while(ss >> num){ l.data.push_back(num); }
             mainSet.lines.push_back(l);   
         }
     }
@@ -44,16 +38,6 @@ set importData(string filename){
     file.close();
     return mainSet;
 }
-void printSet(set s){
-    for(int i = 0; i < s.lines.size(); i++){
-        cout << s.lines.at(i).classifier << " ";
-        for(int j = 0; j < s.lines.at(i).data.size(); j++){
-            cout << s.lines.at(i).data.at(j) << " ";
-        }
-        cout << endl;
-    }
-}   // test routine print set
-
 int numFeatures(set s){
     int i;
     for(i = 0; i < s.lines.at(0).data.size(); i++) {}
@@ -64,22 +48,15 @@ int numInstances(set s){
     for(i = 0; i < s.lines.size(); i++) {}
     return i;
 }
-double getDistance(line L1, line L2, vector<int>featureNumbers){
-    /* so theres 2 lines, and a vector of ints. */
-    /* return distance between the features of the 2 lines (specified by featureNumbers) */
-    /* if featureNumbers.size = 1, just 1 feature (line with 2 points) 1D */
-    /* if featureNumbers.size = 2, 2 features (think x y graph) 2D */
-    /* if featureNumbers.size = 3, 3 features - 3D graph... etc */
+double getDistance(line L1, line L2, vector<int>featureNumbers){    /* use distance formula: Σ((x_1 - x_2)^2) */
     double temp = 0, s = 0;
     for(int i = 0; i < featureNumbers.size(); i++){
         temp = pow(L1.data.at(featureNumbers.at(i)) - L2.data.at(featureNumbers.at(i)), 2);
         s += temp;
-        /* Σ((x_1 - x_2)^2) */
     }
     return sqrt(s);
 }
-double kFold(set s, vector<int> features){
-    /* MachineLearning001.ppt slide 34 */
+double kFold(set s, vector<int> features){  /* MachineLearning001.ppt slide 34 */
     double numCorrect = 0, closestFeature = 99999;
     line closest;
     for(int i = 0; i < s.lines.size(); i++){
@@ -100,7 +77,6 @@ double kFold(set s, vector<int> features){
         closestFeature = 99999;
     }
     return numCorrect/numInstances(s) * 100;    // percentage
-    // return numCorrect;
 }
 string printSubset(vector<int> v){
     string r = "{";
@@ -108,14 +84,11 @@ string printSubset(vector<int> v){
         r += to_string(v.at(j) + 1);
         if(j != 0) r += ",";
     }
-    r += "}";
-    return r;
+    return r + "}";
 }
 void callClock(int i){
-    if(i == 1)
-    start = clock();
-    else
-    cout << "Your algorithm took " << (clock() - start)/(double) CLOCKS_PER_SEC << " seconds.\n";
+    if(i == 1) start = clock();
+    else cout << "Your algorithm took " << (clock() - start)/(double) CLOCKS_PER_SEC << " seconds.\n";
 }
 void forwardSelection(set s){
     vector<int> featureList;
@@ -168,18 +141,14 @@ void backwardElimination(set s){
 }
 void ryanSpecial(set s){}
 int main(){
-    string filename;
-    int sel = 0;
-    set mainData;
-    vector<int> t;
+    string filename; int sel = 0; set mainData; vector<int> t;
     cout << "Welcome to Ryan Yuzuki's Feature Selection Algorithm.\nType the name of the file you wish to test: ";
     cin >> filename;
     mainData = importData(filename);
     for(int i = 0; i < numFeatures(mainData); i++){ t.push_back(i); }
     cout << "This dataset has " << numFeatures(mainData) << " features (not including the class attribute), with " << numInstances(mainData) << " instances.\n";
     cout << "Running nearest neighbor with all " << numFeatures(mainData) << " features, using \"leaving-one-out\" evaluation, I get an accuracy of " << kFold(mainData, t) << "%\n";
-    algorithmSelect:
-    cout << "Type the number of the algorithm you want to run:\n1) Forward Selection\n2) Backward Elimination\n3) Ryan's Special Algorithm\n";
+    algorithmSelect: cout << "Type the number of the algorithm you want to run:\n1) Forward Selection\n2) Backward Elimination\n3) Ryan's Special Algorithm\n";
     cin >> sel;
     if(sel==1){
         callClock(1);
