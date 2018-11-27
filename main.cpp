@@ -5,6 +5,8 @@
 #include <sstream> 
 #include <cstdlib>
 #include <cmath>
+#include <ctime>
+#include <cstdio>
 
 using namespace std;
 
@@ -13,6 +15,8 @@ struct line{
     vector<double> data;    // vector of rest of data in line
 };
 struct set{ vector<line> lines; };
+clock_t start;
+
 set importData(string filename){
     set mainSet;
     line l;
@@ -107,6 +111,12 @@ string printSubset(vector<int> v){
     r += "}";
     return r;
 }
+void callClock(int i){
+    if(i == 1)
+    start = clock();
+    else
+    cout << "Your algorithm took " << (clock() - start)/(double) CLOCKS_PER_SEC << " seconds.\n";
+}
 void forwardSelection(set s){
     vector<int> featureList;
     double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy;
@@ -132,7 +142,30 @@ void forwardSelection(set s){
     }
     cout << "Finished search! The best feature subset is " << printSubset(featureList) << ", which has an accuracy of " << bestAccuracy << "%\n";
 }
-void backwardElimination(set s){}
+void backwardElimination(set s){
+    vector<int> featureList, tempFeatureList;
+    double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy;
+    cout << "Beginning search.\n";
+    for(int i = 0; i < s.lines.at(0).data.size(); i++)
+        featureList.push_back(i);
+    while(prevAccuracy < bestAccuracy){
+        prevAccuracy = bestAccuracy;
+        for(int i = 0; i < featureList.size(); i++){
+            tempFeatureList = featureList;
+            tempFeatureList.erase(tempFeatureList.begin() + i);
+            accuracy = kFold(s, tempFeatureList);
+            cout << "\tUsing feature(s) " << printSubset(tempFeatureList) << " accuracy is " << accuracy << "%\n";   
+            if(accuracy > bestAccuracy){
+                bestAccuracy = accuracy;
+                tempFeature = i;
+            }
+        }
+        if(prevAccuracy == bestAccuracy) break;
+        featureList.erase(featureList.begin() + tempFeature);
+        cout << "Feature set " << printSubset(featureList) << " was best, accuracy is " << bestAccuracy << "%\n";
+    }
+    cout << "Finished search! The best feature subset is " << printSubset(featureList) << ", which has an accuracy of " << bestAccuracy << "%\n";
+}
 void ryanSpecial(set s){}
 int main(){
     string filename;
@@ -148,8 +181,20 @@ int main(){
     algorithmSelect:
     cout << "Type the number of the algorithm you want to run:\n1) Forward Selection\n2) Backward Elimination\n3) Ryan's Special Algorithm\n";
     cin >> sel;
-    if(sel==1){forwardSelection(mainData);}
-    else if(sel==2){backwardElimination(mainData);}
-    else if(sel==3){ryanSpecial(mainData);}
+    if(sel==1){
+        callClock(1);
+        forwardSelection(mainData);
+        callClock(2);
+    }
+    else if(sel==2){
+        callClock(1);
+        backwardElimination(mainData);
+        callClock(2);
+    }
+    else if(sel==3){
+        callClock(1);
+        ryanSpecial(mainData);
+        callClock(2);
+    }
     else{goto algorithmSelect;}
 }
