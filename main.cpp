@@ -56,6 +56,7 @@ double getDistance(line L1, line L2, vector<int>featureNumbers){    /* use dista
     }
     return sqrt(s);
 }
+double kFoldFast(set s, vector<int> features){ return 6; }
 double kFold(set s, vector<int> features){  /* MachineLearning001.ppt slide 34 */
     double numCorrect = 0, closestFeature = 99999;
     line closest;
@@ -90,9 +91,9 @@ void callClock(int i){
     if(i == 1) start = clock();
     else cout << "Your algorithm took " << (clock() - start)/(double) CLOCKS_PER_SEC << " seconds.\n";
 }
-void forwardSelection(set s){
-    vector<int> featureList;
-    double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy;
+void forwardSelection(set s, int typeKfold){
+    vector<int> featureList; double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy;
+    callClock(1);
     cout << "Beginning search.\n";
     while(prevAccuracy < bestAccuracy){
         prevAccuracy = bestAccuracy;
@@ -100,7 +101,8 @@ void forwardSelection(set s){
             for(int j = 0; j < featureList.size(); j++)
             if(featureList.at(j) == i) goto skip;   // skip already used features
             featureList.push_back(i);
-            accuracy = kFold(s, featureList);
+            if(typeKfold == 1) accuracy = kFold(s, featureList);
+            else               accuracy = kFoldFast(s, featureList);
             cout << "\tUsing feature(s) " << printSubset(featureList) << " accuracy is " << accuracy << "%\n";   
             if(accuracy > bestAccuracy){
                 bestAccuracy = accuracy;
@@ -114,10 +116,11 @@ void forwardSelection(set s){
         cout << "Feature set " << printSubset(featureList) << " was best, accuracy is " << bestAccuracy << "%\n";
     }
     cout << "Finished search! The best feature subset is " << printSubset(featureList) << ", which has an accuracy of " << bestAccuracy << "%\n";
+    callClock(2);
 }
 void backwardElimination(set s){
-    vector<int> featureList, tempFeatureList;
-    double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy;
+    vector<int> featureList, tempFeatureList; double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy;
+    callClock(1);
     cout << "Beginning search.\n";
     for(int i = 0; i < s.lines.at(0).data.size(); i++)
         featureList.push_back(i);
@@ -138,8 +141,11 @@ void backwardElimination(set s){
         cout << "Feature set " << printSubset(featureList) << " was best, accuracy is " << bestAccuracy << "%\n";
     }
     cout << "Finished search! The best feature subset is " << printSubset(featureList) << ", which has an accuracy of " << bestAccuracy << "%\n";
+    callClock(2);
 }
-void ryanSpecial(set s){}
+void ryanSpecial(set s){
+    forwardSelection(s,2);  // forwardSelection with kFoldFast instead of kFold
+}
 int main(){
     string filename; int sel = 0; set mainData; vector<int> t;
     cout << "Welcome to Ryan Yuzuki's Feature Selection Algorithm.\nType the name of the file you wish to test: ";
@@ -151,19 +157,13 @@ int main(){
     algorithmSelect: cout << "Type the number of the algorithm you want to run:\n1) Forward Selection\n2) Backward Elimination\n3) Ryan's Special Algorithm\n";
     cin >> sel;
     if(sel==1){
-        callClock(1);
-        forwardSelection(mainData);
-        callClock(2);
+        forwardSelection(mainData,1);
     }
     else if(sel==2){
-        callClock(1);
         backwardElimination(mainData);
-        callClock(2);
     }
     else if(sel==3){
-        callClock(1);
         ryanSpecial(mainData);
-        callClock(2);
     }
     else{goto algorithmSelect;}
 }
