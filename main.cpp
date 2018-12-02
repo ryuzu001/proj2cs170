@@ -56,10 +56,32 @@ double getDistance(line L1, line L2, vector<int>featureNumbers){    /* use dista
     }
     return sqrt(s);
 }
-double kFoldFast(set s, vector<int> features){ return 6; }
+double kFoldFast(set s, vector<int> features, int & bestNumWrong){
+    double numCorrect = 0, numIncorrect = 0, closestFeature = 99999; line closest;
+    for(int i = 0; i < s.lines.size(); i++){
+        line l = s.lines.at(i);   // the one left out
+        for(int j = 0; j < i; j++){
+            if(getDistance(l, s.lines.at(j), features) < closestFeature){
+                closestFeature = getDistance(l, s.lines.at(j), features);
+                closest = s.lines.at(j);
+            }
+        }
+        for(int j = i + 1; j < s.lines.size(); j++){
+            if(getDistance(l, s.lines.at(j), features) < closestFeature){
+                closestFeature = getDistance(l, s.lines.at(j), features);
+                closest = s.lines.at(j);
+            }
+        }
+        if(l.classifier == closest.classifier){ numCorrect++; }
+        else numIncorrect++;
+        if(numIncorrect > bestNumWrong) return 0;
+        closestFeature = 99999;
+    }
+    bestNumWrong = numInstances(s) - numCorrect;
+    return numCorrect/numInstances(s) * 100;    // percentage
+}
 double kFold(set s, vector<int> features){  /* MachineLearning001.ppt slide 34 */
-    double numCorrect = 0, closestFeature = 99999;
-    line closest;
+    double numCorrect = 0, closestFeature = 99999; line closest;
     for(int i = 0; i < s.lines.size(); i++){
         line l = s.lines.at(i);   // the one left out
         for(int j = 0; j < i; j++){
@@ -92,7 +114,7 @@ void callClock(int i){
     else cout << "Your algorithm took " << (clock() - start)/(double) CLOCKS_PER_SEC << " seconds.\n";
 }
 void forwardSelection(set s, int typeKfold){
-    vector<int> featureList; double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy;
+    vector<int> featureList; double bestAccuracy = 0.01, prevAccuracy = 0, tempFeature = 0, accuracy; int bestNumWrong = 999;
     callClock(1);
     cout << "Beginning search.\n";
     while(prevAccuracy < bestAccuracy){
@@ -102,7 +124,7 @@ void forwardSelection(set s, int typeKfold){
             if(featureList.at(j) == i) goto skip;   // skip already used features
             featureList.push_back(i);
             if(typeKfold == 1) accuracy = kFold(s, featureList);
-            else               accuracy = kFoldFast(s, featureList);
+            else               accuracy = kFoldFast(s, featureList, bestNumWrong);
             cout << "\tUsing feature(s) " << printSubset(featureList) << " accuracy is " << accuracy << "%\n";   
             if(accuracy > bestAccuracy){
                 bestAccuracy = accuracy;
@@ -143,9 +165,6 @@ void backwardElimination(set s){
     cout << "Finished search! The best feature subset is " << printSubset(featureList) << ", which has an accuracy of " << bestAccuracy << "%\n";
     callClock(2);
 }
-void ryanSpecial(set s){
-    forwardSelection(s,2);  // forwardSelection with kFoldFast instead of kFold
-}
 int main(){
     string filename; int sel = 0; set mainData; vector<int> t;
     cout << "Welcome to Ryan Yuzuki's Feature Selection Algorithm.\nType the name of the file you wish to test: ";
@@ -154,16 +173,10 @@ int main(){
     for(int i = 0; i < numFeatures(mainData); i++){ t.push_back(i); }
     cout << "This dataset has " << numFeatures(mainData) << " features (not including the class attribute), with " << numInstances(mainData) << " instances.\n";
     cout << "Running nearest neighbor with all " << numFeatures(mainData) << " features, using \"leaving-one-out\" evaluation, I get an accuracy of " << kFold(mainData, t) << "%\n";
-    algorithmSelect: cout << "Type the number of the algorithm you want to run:\n1) Forward Selection\n2) Backward Elimination\n3) Ryan's Special Algorithm\n";
+    algorithmSelect: cout << "Type the number of the algorithm you want to run:\n1) Forward Selection\n2) Backward Elimination\n3) Forward Selection with Fast k-Fold evaluation\n";
     cin >> sel;
-    if(sel==1){
-        forwardSelection(mainData,1);
-    }
-    else if(sel==2){
-        backwardElimination(mainData);
-    }
-    else if(sel==3){
-        ryanSpecial(mainData);
-    }
+    if(sel==1){ forwardSelection(mainData, 1); }
+    else if(sel==2){ backwardElimination(mainData); }
+    else if(sel==3){ forwardSelection(mainData, 2); }  // forwardSelection with kFoldFast instead of kFold 
     else{goto algorithmSelect;}
 }
